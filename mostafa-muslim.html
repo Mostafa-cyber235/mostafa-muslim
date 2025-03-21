@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Mostafa Muslim - Islamic Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: #1a3c53;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+    header {
+      font-size: 36px;
+      padding: 20px;
+      background-color: #008080;
+      width: 100%;
+      text-align: center;
+      text-shadow: 0 0 15px #fff;
+      color: #fff;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      padding: 15px;
+    }
+    #chatBox {
+      height: 250px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .message {
+      margin: 10px 0;
+    }
+    .user { color: #ffcc00; }
+    .bot { color: #0ff; }
+    .section {
+      margin-top: 20px;
+      text-align: center;
+    }
+    input, button {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      width: 100%;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .quran-btn {
+      background-color: #f0ad4e;
+    }
+    .quran-btn:hover {
+      background-color: #ec971f;
+    }
+    .voice-btn {
+      background-color: #0275d8;
+    }
+    .voice-btn:hover {
+      background-color: #025aa5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>🌙 Mostafa Muslim - Islamic Assistant 🌙</header>
+
+  <div class="container">
+    <div id="chatBox"></div>
+    <input type="text" id="userInput" placeholder="Ask a question or say something..." onkeyup="handleInput()">
+    <button onclick="sendMessage()">Send</button>
+    <button class="quran-btn" onclick="openQuran()">📖 Open Quran</button>
+    <button class="voice-btn" onclick="startVoiceChat()">🎤 Start Voice Chat</button>
+
+    <div class="section" id="weather">Weather: Loading...</div>
+    <div class="section" id="prayerTimes">Prayer Times: Loading...</div>
+    <div class="section" id="time">Time: Loading...</div>
+    <div class="section" id="date">Date: Loading...</div>
+  </div>
+
+  <script>
+    const apiKey = 'f49cdde15aab2094770d6d0d33639aae'; // Weather API key
+    const city = 'Cairo'; // City for weather info
+
+    // Function to get current time and date
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById("time").innerHTML = `🕒 Time: ${now.toLocaleTimeString()}`;
+      document.getElementById("date").innerHTML = `📅 Date: ${now.toLocaleDateString()}`;
+    }
+
+    // Update date and time every second
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Function to get weather info
+    async function getWeather() {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const temperature = data.main.temp;
+        const description = data.weather[0].description;
+        document.getElementById("weather").innerHTML = `Weather: ${description}, ${temperature}°C`;
+      } catch (error) {
+        document.getElementById("weather").innerHTML = "Unable to retrieve weather data.";
+      }
+    }
+
+    // Fetch prayer times using a third-party API
+    async function getPrayerTimes() {
+      const url = `https://api.aladhan.com/v1/timingsByCity?city=${city}&country=Egypt&method=2`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const timings = data.data.timings;
+        document.getElementById("prayerTimes").innerHTML = `Prayer Times: Fajr: ${timings.Fajr}, Dhuhr: ${timings.Dhuhr}, Asr: ${timings.Asr}, Maghrib: ${timings.Maghrib}, Isha: ${timings.Isha}`;
+      } catch (error) {
+        document.getElementById("prayerTimes").innerHTML = "Unable to retrieve prayer times.";
+      }
+    }
+
+    // Initialize weather and prayer times on page load
+    window.onload = function() {
+      getWeather();
+      getPrayerTimes();
+    };
+
+    // Function to handle user input
+    function handleInput() {
+      const userInput = document.getElementById("userInput").value.toLowerCase();
+      if (userInput.includes("ما الموعد لصلاه") || userInput.includes("ما الموعد التبقي لأي صلاه")) {
+        const prayerTime = document.getElementById("prayerTimes").innerText.split(":")[1];
+        appendMessage('bot', `The prayer time left is: ${prayerTime}`);
+      }
+    }
+
+    // Function to send a message
+    async function sendMessage() {
+      const userInput = document.getElementById("userInput").value.trim();
+      if (userInput === "") return;
+      appendMessage('user', userInput);
+      document.getElementById("userInput").value = "";
+
+      let response = "Sorry, I didn't understand that.";
+
+      // Simple chatbot logic
+      if (userInput.includes("السلام عليكم")) {
+        response = "Wa Alaikum Assalam!";
+      } else if (userInput.includes("كيف حالك")) {
+        response = "I'm doing great, thank you!";
+      } else if (userInput.includes("قرآن")) {
+        response = "Opening the Quran for you!";
+        openQuran();
+      }
+
+      appendMessage('bot', response);
+    }
+
+    // Append message to chat box
+    function appendMessage(sender, message) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', sender);
+      msgDiv.textContent = message;
+      document.getElementById("chatBox").appendChild(msgDiv);
+    }
+
+    // Function to open Quran page
+    function openQuran() {
+      window.open('https://quran.com', '_blank');
+    }
+
+    // Function for voice chat (Start)
+    function startVoiceChat() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'ar-EG'; // Set language to Arabic
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const speech = event.results[0][0].transcript;
+        document.getElementById("userInput").value = speech;
+        sendMessage();
+      }
+
+      recognition.onend = function() {
+        recognition.start();
+      }
+    }
+
+    // Function to automatically get prayer times and update every day
+    setInterval(getPrayerTimes, 86400000); // Update every 24 hours
+  </script>
+
+</body>
+</html>
